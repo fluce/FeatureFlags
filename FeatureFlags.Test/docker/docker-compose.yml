@@ -1,0 +1,18 @@
+version: '2'
+services:
+  zookeeper:
+    image: dockerkafka/zookeeper
+    container_name: zookeeper  
+    ports:
+      - "2181:2181"
+    volumes:
+      - H:\DockerData\zookeeper\data:/opt/zookeeper-3.4.6/data
+
+      
+#  zookeeper_web:
+#    image: goodguide/zk-web
+#    container_name: zkweb  
+#    ports:
+#      - "8080:8080"
+#    environment:
+#      - ZKWEB_DEFAULT_NODE=zookeeper:2181
