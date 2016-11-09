@@ -1,3 +1,5 @@
+using FeatureFlags.FeatureFlag;
+
 namespace FeatureFlags
 {
     public static class FeatureFlagExtension

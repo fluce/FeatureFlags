@@ -9,6 +9,7 @@ namespace FeatureFlags
     public class FeatureContext
     {
         public DateTime DateTime { get; set; }
-        public Guid Uid { get; set; }
+        public Guid? Uid { get; set; }
+        public string Email { get; set; }
     }
 }

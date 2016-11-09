@@ -4,32 +4,29 @@ using System.ComponentModel;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using FeatureFlags.Stores;
+using FeatureFlags.Stores.AppSettings;
 using NUnit.Framework;
-using org.apache.zookeeper;
 
 namespace FeatureFlags.Test
 {
     [TestFixture]
-    public class WeaverTest
-    {
-        [Test]
-        public void GetFeatureFlag()
-        {
-            var n = new NameValueCollection();
-            n.Add("features.FeatureA", "true");
-            n.Add("features.FeatureC", "true");
-
-            Features.FeatureStore= new CachingFeatureStore(new AppSettingsFeatureStore("features.", n, true));
-
-            Assert.IsTrue(SomeFeatures.FeatureA);
-            Assert.IsFalse(SomeFeatures.FeatureB);
-            Assert.IsTrue(SomeFeatures.TheFeatureC);
-        }
-    }
-
-    [TestFixture]
     public class AmbientContext
     {
+
+        private AmbiantContextProvider ambiantContextProvider;
+
+        public interface ISomeFeatures: IFeatureFlagAccessor
+        {
+            [FeatureFlag("FeatureA")]
+            bool TheFeatureA { get; }
+
+            [FeatureFlag("FeatureC")]
+            bool TheFeatureC { get; }
+        }
+
+        public ISomeFeatures SomeFeatures;
+
         [SetUp]
         public void Setup()
         {
@@ -37,7 +34,7 @@ namespace FeatureFlags.Test
             n.Add("features.FeatureA", "true");
             n.Add("features.FeatureC", @"
 {
-    'contextualRules': [
+    'rules': [
         {
             'rule': 'Schedule',
             'from': '2016-11-28T12:00:00',
@@ -47,25 +44,28 @@ namespace FeatureFlags.Test
 }"
             );
 
-            Features.FeatureStore = new CachingFeatureStore(new AppSettingsFeatureStore("features.", n, true));
+            ambiantContextProvider = new AmbiantContextProvider();
+            Features.Setup(new CachingFeatureStore(new AppSettingsFeatureStore("features.", n, true)), ambiantContextProvider);;
+
+            SomeFeatures = FeatureFlagAccessor.BuildAndInstanciate<ISomeFeatures>(Features.Current);
         }
 
         [Test]
         public void ThreadStaticContextSameThread()
         {
-            Features.AmbientContext = new FeatureContext
+            ambiantContextProvider.SetContext(new FeatureContext
             {
                 DateTime = new DateTime(2016, 11, 28, 13, 00, 00),
                 Uid = Guid.Parse("B783BB98-CEE3-4A6F-A57F-B1A54B57ECE5")
-            };
+            });
 
             Assert.IsTrue(SomeFeatures.TheFeatureC);
 
-            Features.AmbientContext = new FeatureContext
+            ambiantContextProvider.SetContext(new FeatureContext
             {
                 DateTime = new DateTime(2016, 11, 28, 15, 00, 00),
                 Uid = Guid.Parse("B783BB98-CEE3-4A6F-A57F-B1A54B57ECE5")
-            };
+            });
 
             Assert.IsFalse(SomeFeatures.TheFeatureC);
 
@@ -74,11 +74,11 @@ namespace FeatureFlags.Test
         [Test]
         public void ThreadStaticContextOtherThread()
         {
-            Features.AmbientContext = new FeatureContext
+            ambiantContextProvider.SetContext(new FeatureContext
             {
                 DateTime = new DateTime(2016, 11, 28, 13, 00, 00),
                 Uid = Guid.Parse("B783BB98-CEE3-4A6F-A57F-B1A54B57ECE5")
-            };
+            });
 
             bool wasActive = false;
             int wasThreadId = Thread.CurrentThread.ManagedThreadId;
@@ -99,11 +99,11 @@ namespace FeatureFlags.Test
         [Test]
         public void ThreadStaticContextOtherThreadFromPool()
         {
-            Features.AmbientContext = new FeatureContext
+            ambiantContextProvider.SetContext(new FeatureContext
             {
                 DateTime = new DateTime(2016, 11, 28, 13, 00, 00),
                 Uid = Guid.Parse("B783BB98-CEE3-4A6F-A57F-B1A54B57ECE5")
-            };
+            });
 
             wasActiveThreadStaticContextOtherThreadFromPool = false;
             wasThreadIdThreadStaticContextOtherThreadFromPool = Thread.CurrentThread.ManagedThreadId;
@@ -116,6 +116,7 @@ namespace FeatureFlags.Test
 
         bool wasActiveThreadStaticContextOtherThreadFromPool;
         int wasThreadIdThreadStaticContextOtherThreadFromPool;
+
         private void CallBack(object state)
         {
             wasActiveThreadStaticContextOtherThreadFromPool = SomeFeatures.TheFeatureC;
@@ -126,11 +127,11 @@ namespace FeatureFlags.Test
         [Test]
         public void ThreadStaticContextOtherThreadTask()
         {
-            Features.AmbientContext = new FeatureContext
+            ambiantContextProvider.SetContext(new FeatureContext
             {
                 DateTime = new DateTime(2016, 11, 28, 13, 00, 00),
                 Uid = Guid.Parse("B783BB98-CEE3-4A6F-A57F-B1A54B57ECE5")
-            };
+            });
 
             var tf = new TaskFactory();
 
@@ -149,11 +150,11 @@ namespace FeatureFlags.Test
         [Test]
         public async Task ThreadStaticContextOtherThreadAsync()
         {
-            Features.AmbientContext = new FeatureContext
+            ambiantContextProvider.SetContext(new FeatureContext
             {
                 DateTime = new DateTime(2016, 11, 28, 13, 00, 00),
                 Uid = Guid.Parse("B783BB98-CEE3-4A6F-A57F-B1A54B57ECE5")
-            };
+            });
 
             int originalThreadId = Thread.CurrentThread.ManagedThreadId;
 
@@ -170,11 +171,11 @@ namespace FeatureFlags.Test
         [Test]
         public void ThreadStaticContextTwoThreadTwoContext()
         {
-            Features.AmbientContext = new FeatureContext
+            ambiantContextProvider.SetContext(new FeatureContext
             {
                 DateTime = new DateTime(2016, 11, 28, 13, 00, 00),
                 Uid = Guid.Parse("B783BB98-CEE3-4A6F-A57F-B1A54B57ECE5")
-            };
+            });
 
             var tf = new TaskFactory();
 
@@ -188,11 +189,11 @@ namespace FeatureFlags.Test
                 Thread.Sleep(500);
             });
 
-            Features.AmbientContext = new FeatureContext
+            ambiantContextProvider.SetContext(new FeatureContext
             {
                 DateTime = new DateTime(2016, 11, 28, 15, 00, 00),
                 Uid = Guid.Parse("B783BB98-CEE3-4A6F-A57F-B1A54B57ECE5")
-            };
+            });
 
             bool wasActive2 = true;
             int wasThreadId2 = Thread.CurrentThread.ManagedThreadId;
@@ -224,11 +225,11 @@ namespace FeatureFlags.Test
             int wasThreadId1 = Thread.CurrentThread.ManagedThreadId;
 
             var t1 = tf.StartNew(() => {
-                Features.AmbientContext = new FeatureContext
+                ambiantContextProvider.SetContext(new FeatureContext
                 {
                     DateTime = new DateTime(2016, 11, 28, 13, 00, 00),
                     Uid = Guid.Parse("B783BB98-CEE3-4A6F-A57F-B1A54B57ECE5")
-                };
+                });
                 Thread.Sleep(500);
                 wasActive1 = SomeFeatures.TheFeatureC;
                 wasThreadId1 = Thread.CurrentThread.ManagedThreadId;
@@ -239,11 +240,11 @@ namespace FeatureFlags.Test
             int wasThreadId2 = Thread.CurrentThread.ManagedThreadId;
 
             var t2 = tf.StartNew(() => {
-                Features.AmbientContext = new FeatureContext
+                ambiantContextProvider.SetContext(new FeatureContext
                 {
                     DateTime = new DateTime(2016, 11, 28, 15, 00, 00),
                     Uid = Guid.Parse("B783BB98-CEE3-4A6F-A57F-B1A54B57ECE5")
-                };
+                });
                 Thread.Sleep(500);
                 wasActive2 = SomeFeatures.TheFeatureC;
                 wasThreadId2 = Thread.CurrentThread.ManagedThreadId;

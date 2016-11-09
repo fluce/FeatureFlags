@@ -1,0 +1,60 @@
+{
+  "version": 2,
+  "exports": {
+    "FeatureFlags.Grammar/1.0.0": {
+      "type": "project",
+      "framework": ".NETFramework,Version=v4.5",
+      "compile": {
+        "bin/Debug/FeatureFlags.Grammar.dll": {}
+      },
+      "runtime": {
+        "../packages/Antlr4.Runtime.4.5.3/lib/net45/Antlr4.Runtime.dll": {},
+        "bin/Debug/FeatureFlags.Grammar.dll": {}
+      },
+      "contentFiles": {
+        "bin/Debug/FeatureFlags.Grammar.pdb": {
+          "buildAction": "None",
+          "codeLanguage": "any",
+          "copyToOutput": true
+        }
+      }
+    },
+    "FeatureFlags.ZooKeeper/1.0.0": {
+      "type": "project",
+      "framework": ".NETFramework,Version=v4.6.1",
+      "compile": {
+        "bin/Debug/FeatureFlags.ZooKeeper.dll": {}
+      },
+      "runtime": {
+        "../packages/ZooKeeperNetEx.3.4.9/lib/net45/ZooKeeperNetEx.dll": {},
+        "bin/Debug/FeatureFlags.ZooKeeper.dll": {}
+      },
+      "contentFiles": {
+        "bin/Debug/FeatureFlags.ZooKeeper.pdb": {
+          "buildAction": "None",
+          "codeLanguage": "any",
+          "copyToOutput": true
+        }
+      }
+    },
+    "FeatureFlags/1.0.0": {
+      "type": "project",
+      "framework": ".NETFramework,Version=v4.6.1",
+      "compile": {
+        "bin/Debug/FeatureFlags.dll": {}
+      },
+      "runtime": {
+        "../packages/Antlr4.Runtime.4.5.3/lib/net45/Antlr4.Runtime.dll": {},
+        "../packages/Newtonsoft.Json.9.0.1/lib/net45/Newtonsoft.Json.dll": {},
+        "bin/Debug/FeatureFlags.dll": {}
+      },
+      "contentFiles": {
+        "bin/Debug/FeatureFlags.pdb": {
+          "buildAction": "None",
+          "codeLanguage": "any",
+          "copyToOutput": true
+        }
+      }
+    }
+  }
+}

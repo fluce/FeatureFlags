@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Specialized;
 using System.Globalization;
-using FeatureFlags.Rules;
+using FeatureFlags.Evaluator;
+using FeatureFlags.Evaluator.Rules;
 using NUnit.Framework;
 
 namespace FeatureFlags.Test
@@ -21,7 +22,7 @@ namespace FeatureFlags.Test
         [TestCase("yes", ExpectedResult = true)]
         public bool ParserConstant(string value)
         {
-            var a = FeatureFlagUtils.Parse(value);
+            var a = FeatureFlagEvaluatorUtils.Parse(value);
             Assert.IsInstanceOf<ConstantFeatureFlagStateEvaluator>(a);
             return a.Evaluate(null)==FeatureFlagState.Active;
         }
@@ -32,7 +33,7 @@ namespace FeatureFlags.Test
         {
             var value = @"
 {
-    'contextualRules': [
+    'rules': [
         { 
             'rule': 'Or',
             'rules': [ 
@@ -64,7 +65,7 @@ namespace FeatureFlags.Test
     ]
 }
 ";
-            var a = FeatureFlagUtils.Parse(value);
+            var a = FeatureFlagEvaluatorUtils.Parse(value);
 
             Assert.IsInstanceOf<DynamicFeatureFlagStateEvaluator>(a);
 
@@ -141,6 +142,16 @@ namespace FeatureFlags.Test
                 });
         }
 
+
+        [TestCase(true, FeatureFlagState.Inactive, ExpectedResult = FeatureFlagState.Active)]
+        [TestCase(false, FeatureFlagState.Active, ExpectedResult = FeatureFlagState.Inactive)]
+        [TestCase(null, FeatureFlagState.Active, ExpectedResult = FeatureFlagState.Active)]
+        [TestCase(null, FeatureFlagState.Inactive, ExpectedResult = FeatureFlagState.Inactive)]
+        public FeatureFlagState Override(bool? a1, FeatureFlagState a2)
+        {
+            var p=new DynamicFeatureFlagStateEvaluator(new FeatureRulesDefinition() { OverrideValue = a1, ContextualRules = new []{ new ConstantRule() { Value=a2}  }});
+            return p.Evaluate(null);
+        }
 
     }
 

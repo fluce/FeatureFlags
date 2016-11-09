@@ -35,8 +35,16 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Antlr4.Runtime, Version=4.5.0.0, Culture=neutral, PublicKeyToken=09abb75b9ed49849, processorArchitecture=MSIL">
+      <HintPath>..\packages\Antlr4.Runtime.4.5.3\lib\net45\Antlr4.Runtime.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <Private>False</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\FeatureFlagsCore\bin\Debug\net461\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="nunit.framework, Version=3.5.0.0, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
       <HintPath>..\packages\NUnit.3.5.0\lib\net45\nunit.framework.dll</HintPath>
@@ -45,10 +53,6 @@
     <Reference Include="System" />
     <Reference Include="System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.PowerShell.5.ReferenceAssemblies.1.0.0\lib\net4\System.Management.Automation.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="ZooKeeperNetEx, Version=3.4.9.0, Culture=neutral, PublicKeyToken=42cd15de36f9b993, processorArchitecture=MSIL">
-      <HintPath>..\packages\ZooKeeperNetEx.3.4.9\lib\net45\ZooKeeperNetEx.dll</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>
@@ -61,25 +65,27 @@
     <Otherwise />
   </Choose>
   <ItemGroup>
+    <Compile Include="Grammar.cs" />
     <Compile Include="UnitTest1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="FeatureFlagParser.cs" />
+    <Compile Include="Accessor.cs" />
+    <Compile Include="ContextualRules.cs" />
     <Compile Include="UnitTest3.cs" />
-    <Compile Include="ZooKeeperTest.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FeatureFlags.Grammar\FeatureFlags.Grammar.csproj">
+      <Project>{1EFA9EBB-DDA5-40F1-8DFE-5E2DC2C2BA72}</Project>
+      <Name>FeatureFlags.Grammar</Name>
+    </ProjectReference>
     <ProjectReference Include="..\FeatureFlags\FeatureFlags.csproj">
       <Project>{435416c9-6747-406f-b8cf-5c066309c987}</Project>
       <Name>FeatureFlags</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="docker\docker-compose.yml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup />
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>

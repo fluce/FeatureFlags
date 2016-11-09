@@ -1,77 +1,41 @@
-using System;
 using System.Diagnostics;
-using System.Threading;
+using System.Security.Cryptography.X509Certificates;
+using FeatureFlags.Stores;
 
 namespace FeatureFlags
 {
-    public static class Features
+    public class Features: IFeatures
     {
-        public static IFeatureStore FeatureStore { get; set; }
+        public IFeatureContextProvider FeatureContextProvider { get; set; }
 
-        private static readonly AsyncLocal<FeatureContext> AsyncLocalFeatureContext = new AsyncLocal<FeatureContext>();
-        private static readonly ThreadLocal<FeatureContext> ThreadLocalFeatureContext = new ThreadLocal<FeatureContext>();
+        public IFeatureStore FeatureStore { get; set; }
 
-        public static FeatureContext AmbientContext
+        private static object _lock=new object();
+
+        public static IFeatures Current { get; private set; }
+
+
+        public static void Setup(IFeatureStore store, IFeatureContextProvider contextProvider)
         {
-            get
-            {
-                var a = AsyncLocalFeatureContext.Value;
-                if (a != null)
-                {
-                    Debug.WriteLine("Context found in AsyncLocal");
-                    return a;
-                }
-                a = ThreadLocalFeatureContext.Value;
-                if (a != null)
-                {
-                    Debug.WriteLine("Context found in ThreadLocal");
-                    return a;
-                }
-                return null;
-            }
-            set
-            {
-                AsyncLocalFeatureContext.Value = value;
-                //ThreadLocalFeatureContext.Value = value;
-            }
+            Current = new Features(store,contextProvider);
         }
 
-        public static bool IsActive(string featureKey, FeatureContext featureContext)
+        public Features(IFeatureStore store, IFeatureContextProvider contextProvider)
+        {
+            FeatureStore = store;
+            FeatureContextProvider = contextProvider;
+        }
+
+        public IFeatureContextProvider ContextProvider => FeatureContextProvider;
+
+        public bool IsActive(string featureKey, FeatureContext featureContext)
         {
             return FeatureStore.GetFeature(featureKey).IsActive(featureContext);
         }
 
-        public static bool IsActive(string featureKey)
+        public bool IsActive(string featureKey)
         {
-            return IsActive(featureKey, AmbientContext);
+            return IsActive(featureKey, FeatureContextProvider?.GetContext());
         }
     }
-    
-    [AttributeUsage(AttributeTargets.Property)]
-    public class FeatureFlagAttribute : Attribute
-    {
-        public string FeatureKey { get; set; }
-
-        public FeatureFlagAttribute(string featureKey)
-        {
-            FeatureKey = featureKey;
-        }
-        public FeatureFlagAttribute()
-        {
-            FeatureKey = null;
-        }
-    }
-
-    public static class SomeFeatures
-    {
-        [FeatureFlag]
-        public static bool FeatureA { get; }
-
-        [FeatureFlag]
-        public static bool FeatureB { get; }
-        
-        [FeatureFlag("FeatureC")]
-        public static bool TheFeatureC { get; }
-    }
-
 }

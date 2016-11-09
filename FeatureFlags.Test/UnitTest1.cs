@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Specialized;
+using FeatureFlags.Stores;
+using FeatureFlags.Stores.AppSettings;
 using NUnit.Framework;
 
 namespace FeatureFlags.Test
