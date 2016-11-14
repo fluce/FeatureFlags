@@ -4,8 +4,9 @@ namespace FeatureFlags.Evaluator
     {
         private FeatureFlagState State { get; }
 
-        public ConstantFeatureFlagStateEvaluator(FeatureFlagState state)
+        public ConstantFeatureFlagStateEvaluator(string key, FeatureFlagState state)
         {
+            Key = key;
             State = state;
         }
 

@@ -19,6 +19,13 @@ namespace FeatureFlags.Evaluator
 
     public class Globals
     {
+        private FeatureContext Context { get; set; }
+
+        public Globals(FeatureContext context)
+        {
+            Context = context;
+        }
+
         public DateTime Now { get; set; }
 
         public UserInfo User { get; set; }
@@ -35,6 +42,11 @@ namespace FeatureFlags.Evaluator
 
                 return r < ratio*65536;
             }
+        }
+
+        public bool IsActive(string featureFlag)
+        {
+            return Context.InternalFeatureContext.Features.IsActive(featureFlag, Context);
         }
 
     }

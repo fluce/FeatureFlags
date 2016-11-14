@@ -22,7 +22,7 @@ namespace FeatureFlags.Test
         [TestCase("yes", ExpectedResult = true)]
         public bool ParserConstant(string value)
         {
-            var a = FeatureFlagEvaluatorUtils.Parse(value);
+            var a = FeatureFlagEvaluatorUtils.Parse(null,value);
             Assert.IsInstanceOf<ConstantFeatureFlagStateEvaluator>(a);
             return a.Evaluate(null)==FeatureFlagState.Active;
         }
@@ -65,7 +65,7 @@ namespace FeatureFlags.Test
     ]
 }
 ";
-            var a = FeatureFlagEvaluatorUtils.Parse(value);
+            var a = FeatureFlagEvaluatorUtils.Parse(null,value);
 
             Assert.IsInstanceOf<DynamicFeatureFlagStateEvaluator>(a);
 
@@ -149,7 +149,7 @@ namespace FeatureFlags.Test
         [TestCase(null, FeatureFlagState.Inactive, ExpectedResult = FeatureFlagState.Inactive)]
         public FeatureFlagState Override(bool? a1, FeatureFlagState a2)
         {
-            var p=new DynamicFeatureFlagStateEvaluator(new FeatureRulesDefinition() { OverrideValue = a1, ContextualRules = new []{ new ConstantRule() { Value=a2}  }});
+            var p=new DynamicFeatureFlagStateEvaluator(null, new FeatureRulesDefinition() { OverrideValue = a1, ContextualRules = new []{ new ConstantRule() { Value=a2}  }});
             return p.Evaluate(null);
         }
 

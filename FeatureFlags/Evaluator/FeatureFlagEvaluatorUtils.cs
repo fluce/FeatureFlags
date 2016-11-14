@@ -7,7 +7,7 @@ namespace FeatureFlags.Evaluator
 {
     public static class FeatureFlagEvaluatorUtils
     {
-        public static FeatureFlagStateEvaluator Parse(string v)
+        public static FeatureFlagStateEvaluator Parse(string key, string v)
         {
             bool state = false;
             if (v != null && !bool.TryParse(v, out state))
@@ -28,7 +28,7 @@ namespace FeatureFlags.Evaluator
                         if (!string.IsNullOrEmpty(rules.ActiveExpression))
                             rules.ActiveFunc = Compiler<Globals, bool>.Compile(rules.ActiveExpression);
 
-                        return new DynamicFeatureFlagStateEvaluator(rules);
+                        return new DynamicFeatureFlagStateEvaluator(key, rules);
                     }
                     catch (JsonReaderException)
                     {
@@ -41,7 +41,7 @@ namespace FeatureFlags.Evaluator
 
                 }
             }
-            return new ConstantFeatureFlagStateEvaluator(state ? FeatureFlagState.Active : FeatureFlagState.Inactive);
+            return new ConstantFeatureFlagStateEvaluator(key, state ? FeatureFlagState.Active : FeatureFlagState.Inactive);
         }
 
         public static string SerializeRules(FeatureRulesDefinition def)
@@ -53,7 +53,7 @@ namespace FeatureFlags.Evaluator
         {
             Expression expression;
             var r=Compiler<Globals, bool>.Compile(rule,out expression);
-            var global = new Globals()
+            var global = new Globals(null)
             {
                 Now = DateTime.Now,
                 User = new Globals.UserInfo() { Email = "test@mail.com", Uid = Guid.NewGuid()}

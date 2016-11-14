@@ -33,7 +33,7 @@ namespace FeatureFlagsAdmin.Controllers
                                             x=>
                                             {
                                                 var definition = DynamicFeatureStore.GetFeatureFlagDefinition(x.Name);
-                                                var p = FeatureFlagEvaluatorUtils.Parse(definition.Definition);
+                                                var p = FeatureFlagEvaluatorUtils.Parse(x.Name,definition.Definition);
                                                 var dynamicEvaluator = p as DynamicFeatureFlagStateEvaluator;
                                                 if (dynamicEvaluator != null)
                                                 {
@@ -66,7 +66,7 @@ namespace FeatureFlagsAdmin.Controllers
         public void Activate(string key)
         {
             var def= DynamicFeatureStore.GetFeatureFlagDefinition(key);
-            var p = FeatureFlagEvaluatorUtils.Parse(def.Definition);
+            var p = FeatureFlagEvaluatorUtils.Parse(key,def.Definition);
             var dynamicEvaluator = p as DynamicFeatureFlagStateEvaluator;
             if (dynamicEvaluator != null)
             {
@@ -83,7 +83,7 @@ namespace FeatureFlagsAdmin.Controllers
         public void Dectivate(string key)
         {
             var def = DynamicFeatureStore.GetFeatureFlagDefinition(key);
-            var p = FeatureFlagEvaluatorUtils.Parse(def.Definition);
+            var p = FeatureFlagEvaluatorUtils.Parse(key,def.Definition);
             var dynamicEvaluator = p as DynamicFeatureFlagStateEvaluator;
             if (dynamicEvaluator != null)
             {
@@ -100,8 +100,8 @@ namespace FeatureFlagsAdmin.Controllers
         public void SetRule(string key, string rule)
         {
             var def = DynamicFeatureStore.GetFeatureFlagDefinition(key);
-            var p = FeatureFlagEvaluatorUtils.Parse(def.Definition);
-            var dynamicEvaluator = p as DynamicFeatureFlagStateEvaluator ?? new DynamicFeatureFlagStateEvaluator(new FeatureRulesDefinition());
+            var p = FeatureFlagEvaluatorUtils.Parse(key,def.Definition);
+            var dynamicEvaluator = p as DynamicFeatureFlagStateEvaluator ?? new DynamicFeatureFlagStateEvaluator(key, new FeatureRulesDefinition());
             dynamicEvaluator.Rules.ActiveExpression = rule;
             DynamicFeatureStore.SetFeatureFlagDefinition(new FeatureFlagDefinition { Name = key, Definition = FeatureFlagEvaluatorUtils.SerializeRules(dynamicEvaluator.Rules) });
         }

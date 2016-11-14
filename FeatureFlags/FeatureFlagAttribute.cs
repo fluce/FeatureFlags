@@ -16,4 +16,20 @@ namespace FeatureFlags
             FeatureKey = null;
         }
     }
+
+    [AttributeUsage(AttributeTargets.Interface)]
+    public class FeatureFlagPrefixAttribute : Attribute
+    {
+        public string FeatureKeyPrefix { get; set; }
+
+        public FeatureFlagPrefixAttribute(string featureKeyPrefix)
+        {
+            FeatureKeyPrefix = featureKeyPrefix;
+        }
+        public FeatureFlagPrefixAttribute()
+        {
+            FeatureKeyPrefix = null;
+        }
+    }
+
 }

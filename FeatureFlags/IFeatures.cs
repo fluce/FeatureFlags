@@ -6,4 +6,5 @@ namespace FeatureFlags
         bool IsActive(string featureKey, FeatureContext featureContext);
         bool IsActive(string featureKey);
     }
+   
 }
