@@ -867,7 +867,7 @@ function Sizzle( selector, context, results, seed ) {
 /**
  * Create key-value caches of limited size
  * @returns {function(string, object)} Returns the Object data after storing it on itself with
- *	property name the (space-suffixed) string and (if the cache is larger than Expr.cacheLength)
+ *	property name the (space-suffixed) string and (if the Cache is larger than Expr.cacheLength)
  *	deleting the oldest entry
  */
 function createCache() {
@@ -1713,7 +1713,7 @@ Expr = Sizzle.selectors = {
 
 						start = [ forward ? parent.firstChild : parent.lastChild ];
 
-						// non-xml :nth-child(...) stores cache data on `parent`
+						// non-xml :nth-child(...) stores Cache data on `parent`
 						if ( forward && useCache ) {
 
 							// Seek `elem` from a previously-cached index
@@ -1737,7 +1737,7 @@ Expr = Sizzle.selectors = {
 								// Fallback to seeking `elem` from the start
 								(diff = nodeIndex = 0) || start.pop()) ) {
 
-								// When found, cache indexes on `parent` and break
+								// When found, Cache indexes on `parent` and break
 								if ( node.nodeType === 1 && ++diff && node === elem ) {
 									uniqueCache[ type ] = [ dirruns, nodeIndex, diff ];
 									break;
@@ -3139,7 +3139,7 @@ function createOptions( options ) {
 jQuery.Callbacks = function( options ) {
 
 	// Convert options from String-formatted to Object-formatted if needed
-	// (we check in cache first)
+	// (we check in Cache first)
 	options = typeof options === "string" ?
 		createOptions( options ) :
 		jQuery.extend( {}, options );
@@ -3689,7 +3689,7 @@ Data.prototype = {
 			return {};
 		}
 
-		// Check if the owner object already has a cache
+		// Check if the owner object already has a Cache
 		var value = owner[ this.expando ];
 
 		// If not, create one
@@ -3731,7 +3731,7 @@ Data.prototype = {
 		// Handle: [ owner, { properties } ] args
 		} else {
 
-			// Copy the properties one-by-one to the cache object
+			// Copy the properties one-by-one to the Cache object
 			for ( prop in data ) {
 				cache[ prop ] = data[ prop ];
 			}
@@ -3754,7 +3754,7 @@ Data.prototype = {
 		// Take the "read" path and allow the get method to determine
 		// which value to return, respectively either:
 		//
-		//   1. The entire cache object
+		//   1. The entire Cache object
 		//   2. The data stored at the key
 		//
 		if ( key === undefined ||
@@ -3962,10 +3962,10 @@ jQuery.fn.extend( {
 			// (and therefore has an element appears at this[ 0 ]) and the
 			// `value` parameter was not undefined. An empty jQuery object
 			// will result in `undefined` for elem = this[ 0 ] which will
-			// throw an exception if an attempt to read a data cache is made.
+			// throw an exception if an attempt to read a data Cache is made.
 			if ( elem && value === undefined ) {
 
-				// Attempt to get data from the cache
+				// Attempt to get data from the Cache
 				// with the key as-is
 				data = dataUser.get( elem, key ) ||
 
@@ -3979,7 +3979,7 @@ jQuery.fn.extend( {
 
 				camelKey = jQuery.camelCase( key );
 
-				// Attempt to get data from the cache
+				// Attempt to get data from the Cache
 				// with the key camelized
 				data = dataUser.get( elem, camelKey );
 				if ( data !== undefined ) {
@@ -8261,7 +8261,7 @@ jQuery.extend( {
 	// Counter for holding the number of active queries
 	active: 0,
 
-	// Last-Modified header cache for next request
+	// Last-Modified header Cache for next request
 	lastModified: {},
 	etag: {},
 
@@ -8279,7 +8279,7 @@ jQuery.extend( {
 		dataType: null,
 		username: null,
 		password: null,
-		cache: null,
+		Cache: null,
 		throws: false,
 		traditional: false,
 		headers: {},
@@ -8362,7 +8362,7 @@ jQuery.extend( {
 
 		var transport,
 
-			// URL without anti-cache param
+			// URL without anti-Cache param
 			cacheURL,
 
 			// Response headers
@@ -8565,7 +8565,7 @@ jQuery.extend( {
 				delete s.data;
 			}
 
-			// Add anti-cache in url if needed
+			// Add anti-Cache in url if needed
 			if ( s.cache === false ) {
 				s.url = rts.test( cacheURL ) ?
 
@@ -9208,7 +9208,7 @@ jQuery.ajaxSetup( {
 	}
 } );
 
-// Handle cache's special case and crossDomain
+// Handle Cache's special case and crossDomain
 jQuery.ajaxPrefilter( "script", function( s ) {
 	if ( s.cache === undefined ) {
 		s.cache = false;

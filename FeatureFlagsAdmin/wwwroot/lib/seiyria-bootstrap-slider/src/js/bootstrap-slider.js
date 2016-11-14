@@ -524,7 +524,7 @@
 				/* Hide original <input> element */
 				this.element.style.display = "none";
 			}
-			/* If JQuery exists, cache JQ references */
+			/* If JQuery exists, Cache JQ references */
 			if($) {
 				this.$element = $(this.element);
 				this.$sliderElem = $(this.sliderElem);
