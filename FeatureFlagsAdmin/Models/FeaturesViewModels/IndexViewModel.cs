@@ -10,6 +10,7 @@ namespace FeatureFlagsAdmin.Models.FeaturesViewModels
     {
         public List<FeatureFlagsViewModel> Features { get; set; }
         public List<string> ActiveNodes { get; set; }
+        public List<string> AllStores { get; set; }
     }
 
     public class FeatureFlagsViewModel

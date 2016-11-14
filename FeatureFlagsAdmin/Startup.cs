@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using FeatureFlags;
 using FeatureFlags.Stores.ZooKeeper;
+using FeatureFlagsAdmin.Controllers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -57,7 +58,7 @@ namespace FeatureFlagsAdmin
             services.AddTransient<IEmailSender, AuthMessageSender>();
             services.AddTransient<ISmsSender, AuthMessageSender>();
 
-            services.AddSingleton<IDynamicFeatureStore>(new ZooKeeperFeatureStore("localhost:2181/TestWebApp", false));
+            services.AddSingleton<IFeatureStoreFactory>(new FeatureStoreFactory("localhost:2181"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

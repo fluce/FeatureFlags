@@ -48,6 +48,7 @@
     <Compile Include="Stores\ZooKeeper\FeatureWatcher.cs" />
     <Compile Include="Stores\ZooKeeper\LocalViewItem.cs" />
     <Compile Include="Stores\ZooKeeper\ZooKeeperFeatureStore.cs" />
+    <Compile Include="Stores\ZooKeeper\ZooKeeperStores.cs" />
     <Compile Include="Stores\ZooKeeper\ZookeeperWatcher.cs" />
   </ItemGroup>
   <ItemGroup>

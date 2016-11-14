@@ -1,0 +1,247 @@
+﻿@model FeatureFlagsAdmin.Models.FeaturesViewModels.IndexViewModel
+@{
+    ViewData["Title"] = "Features";
+}
+<div class="row">
+    <div class="col-md-9">
+        <h2>Features</h2>
+        <table class="table">
+            <tr><th>Feature</th><th>State</th><th></th></tr>
+            @foreach (var featureFlag in Model.Features)
+            {
+                <tr>
+                    <td>@featureFlag.Key</td>
+                    <td><input asp-for="@featureFlag.IsActive" class="switch feature" data-size="mini" data-key="@featureFlag.Key" /></td>
+                    <td>
+                        <span class="feature-rule" id="feature-rule-@featureFlag.Key">@featureFlag.Definition</span>
+                        <a data-key="@featureFlag.Key" class="add-rule" href="#add-rule" data-toggle="modal" data-target="#add-rule">
+                            @if (featureFlag.IsDynamic)
+                            {
+                                <text>Modify</text>
+                            }
+                            else
+                            {
+                                <text>Add rule...</text>
+                            }
+                        </a>
+                    </td>
+                </tr>
+            }
+        </table>
+    </div>
+    <div class="col-md-3">
+        <h2>Active nodes</h2>
+        <ul>
+            @foreach (var node in Model.ActiveNodes)
+            {
+                <li>@node</li>
+            }
+        </ul>
+        <h2>Other stores</h2>
+        <ul>
+            @foreach (var store in Model.AllStores)
+            {
+                <li><a asp-action="StoreIndex" asp-route-store="@store">@store</a></li>
+            }
+        </ul>
+    </div>
+</div>
+
+<div class="modal fade" id="add-rule" tabindex="-1" role="dialog" data-backdrop="static">
+    <div class="vertical-alignment-helper">
+        <div class="modal-dialog vertical-align-center" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">Modal title</h4>
+                </div>
+                <div class="modal-body">
+
+                        <!-- Nav tabs -->
+                        <ul class="nav nav-tabs" role="tablist" id="tab-modal"> 
+                            <li role="presentation" class="active"><a href="#basic-tab" aria-controls="Basic" role="tab" data-toggle="tab">Basic</a></li>
+                            <li role="presentation"><a href="#advanced-tab" aria-controls="Advanced" role="tab" data-toggle="tab">Advanced</a></li>
+                        </ul>
+
+                        <!-- Tab panes -->
+                        <div class="tab-content">
+                            <div role="tabpanel" class="tab-pane fade in active" id="basic-tab">
+                                <form class="form-horizontal">
+                                    <div class="form-group">
+
+                                        <label class="col-sm-4 control-label">
+                                            User sampling:
+                                        </label>
+                                        <div class="col-sm-5">
+                                            <input id="user-sampling" data-slider-id="ex-user-sampling" type="text" data-slider-min="0" data-slider-max="100" data-slider-step="1" data-slider-value="25" />
+                                        </div>
+                                        <div class="col-sm-1 control-label" id="user-sampling-value"></div>
+                                        <div class="col-sm-2"></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="checkbox" class="col-sm-1 checkbox" />
+                                        <label for="start-date" class="col-sm-3 control-label">Inactive before:</label>
+                                        <div class="col-sm-5 input-group date" id="start-date">
+                                            <input type="text" class="form-control" />
+                                            <span class="input-group-addon">
+                                                <span class="glyphicon glyphicon-calendar"></span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="checkbox" class="col-sm-1 checkbox" />
+                                        <label for="end-date" class="col-sm-3 control-label">Inactive after:</label>
+                                        <div class="col-sm-5 input-group date" id="end-date">
+                                            <input type="text" class="form-control" />
+                                            <span class="input-group-addon">
+                                                <span class="glyphicon glyphicon-calendar"></span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div role="tabpanel" class="tab-pane fade" id="advanced-tab">
+                                <form>
+                                    <div class="form-group">
+                                        <label for="rule-text" class="control-label">Rule expression:</label>
+                                        <div class="rule-text-container has-feedback">
+                                            <div class="form-control" id="rule-text" contenteditable="true"></div>
+                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
+                                        </div>
+                                        <span id="check-result" class="help-block">Yahhoo ?!</span>
+                                    </div>
+                                    <div class="form-group">
+                                    </div>
+                                </form>
+                                <div class="panel">
+                                    <div class="panel-body">
+                                        Activate...
+                                        <ul>
+                                            <li>
+                                                for a specific user: <code>User.Email="bob@mail.com"</code>
+                                            </li>
+                                            <li>
+                                                for users from one domain: <code>User.Email.EndsWith("@@mail.com")</code>
+                                            </li>
+                                            <li>
+                                                for 1/4 of all users: <code>User.Samples(25%)</code>
+                                            </li>
+                                            <li>
+                                                on afternoon: <code>Now>'12:00'</code>
+                                            </li>
+                                            <li>
+                                                from 15th december to 26th december: <code>'2016/12/15' < Now < '2016/12/26'</code>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="panel panel-info">
+                                    <div class="panel-heading">Quick reference</div>
+                                    <div class="panel-body">
+                                        <ul>
+                                            <li>Operators: <code>and</code>, <code>or</code>, <code>not</code>, <code>></code>, <code>&lt;</code>, <code>>=</code>, <code>&lt;=</code></li>
+                                            <li>Data: <code>User.Email</code>, <code>User.Uid</code>, <code>Now</code></li>
+                                            <li>Functions: <code>User.Sample(...)</code>, string methods on <code>User.Email</code></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-default" id="check-rule">Check</button>
+                    <button type="button" class="btn btn-primary" id="save-rule">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+        (function ($) {
+            $.fn.bootstrapSwitch.defaults.onColor = 'success';
+            $.fn.bootstrapSwitch.defaults.offColor = 'danger';
+            $(".switch").bootstrapSwitch();
+            $(".feature").each(function () {
+                $(this).on('switchChange.bootstrapSwitch', function (event, state) {
+                    var key = $(this).attr("data-key");
+                    var value = $(this).is(":checked");
+                    var url;
+                    if (value) {
+                        url = document.location.href + "/features/" + key + "/activate";
+                    } else {
+                        url = document.location.href + "/features/" + key + "/deactivate";
+                    };
+                    $.post(url);
+                });
+            });
+            
+            $('#add-rule').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget); // Button that triggered the modal
+                var key = button.data('key'); // Extract info from data-* attributes
+
+                // If necessary, you could initiate an AJAX request here (and then do the updating in a callback).
+                // Update the modal's content. We'll use jQuery here, but you could use a data binding library or other methods instead.
+                var modal = $(this);
+                modal.find('.modal-title').html('Add rule for <b>' + $('<div/>').text(key).html() + '</b> event');
+                modal.find('.modal-body #rule-text').text($("#feature-rule-" + key).text());
+                modal.find('#save-rule').data('key', key);
+
+                /*$('.modal').addClass('in');
+                $('#tab-modal a:first').tab('show');*/
+
+                check_syntax();
+            });
+
+            $('#save-rule').on('click', function (event) {
+                var button = $(event.target); // Button that triggered the modal
+                var key = button.data('key'); // Extract info from data-* attributes
+                var rule_text = $("#rule-text").text();
+                $("#feature-rule-" + key).text(rule_text);
+                $('#add-rule').modal('hide');
+                $('a[data-key=\'' + key + '\'].add-rule').text('Modify');
+
+                var url = document.location.href + "/features/" + key;
+                $.post(url, { rule: rule_text });
+            });
+
+            $('#check-rule').on('click', function (event) {
+                var button = $(event.target); // Button that triggered the modal
+                check_syntax();
+            });
+
+            $('#rule-text').on('input selectionchange propertychange', function (event) {
+                var button = $(event.target); // Button that triggered the modal
+                check_syntax();
+            });
+
+
+            function check_syntax() {
+                var rule_text = $("#rule-text").text();
+                var url = "features/checksyntax";
+                $.post(url, { rule: rule_text }, function (data) {
+                    $('#check-result').text(data.message || "No error detected");
+                    $('#check-result').parent().toggleClass("has-success", data.success).toggleClass("has-error", !data.success);
+                    $('#rule-text ~ .form-control-feedback').toggleClass("glyphicon-ok", data.success).toggleClass("glyphicon-remove", !data.success);
+                });
+            }
+
+
+            $('#start-date').datetimepicker({
+                format: "DD/MM/YYYY HH:mm",
+                allowInputToggle: true,
+                showClear: true
+            });
+
+            $('#user-sampling').slider({ formatter: function (val) { $('#user-sampling-value').text(val+"%"); return val + "%" } });
+
+
+
+        })(jQuery);
+        });
+
+    </script>
+}

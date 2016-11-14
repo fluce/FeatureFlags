@@ -20,7 +20,7 @@ namespace FeatureFlags.Test
         public async Task Setup()
         {
             StartZooKeeper();
-            var zk = new ZooKeeper("127.0.0.1:2181", 100000, null);
+            var zk = new org.apache.zookeeper.ZooKeeper("127.0.0.1:2181", 100000, null);
             await DeleteRecursive(zk, "/FeatureFlags", "features");
             await CreateIfNotExist(zk, "/FeatureFlags/features/featureA", "true");
             await CreateIfNotExist(zk, "/FeatureFlags/features/featureB", "false");
@@ -60,14 +60,14 @@ namespace FeatureFlags.Test
 
         public async Task ChangeValue(string path, string value)
         {
-            var zk = new ZooKeeper("127.0.0.1:2181", 60000, null);
+            var zk = new org.apache.zookeeper.ZooKeeper("127.0.0.1:2181", 60000, null);
             await zk.setDataAsync(path, Encoding.UTF8.GetBytes(value));
             await zk.closeAsync();
         }
 
         public async Task AddValue(string path, string value)
         {
-            var zk = new ZooKeeper("127.0.0.1:2181", 60000, null);
+            var zk = new org.apache.zookeeper.ZooKeeper("127.0.0.1:2181", 60000, null);
             await zk.createAsync(path, Encoding.UTF8.GetBytes(value), ZooDefs.Ids.OPEN_ACL_UNSAFE,
                         CreateMode.PERSISTENT);
             await zk.closeAsync();
@@ -75,13 +75,13 @@ namespace FeatureFlags.Test
 
         public async Task DeleteValue(string path)
         {
-            var zk = new ZooKeeper("127.0.0.1:2181", 60000, null);
+            var zk = new org.apache.zookeeper.ZooKeeper("127.0.0.1:2181", 60000, null);
             await zk.deleteAsync(path);
             await zk.closeAsync();
         }
 
 
-        public static async Task DeleteRecursive(ZooKeeper zk, string path = "", string key = "")
+        public static async Task DeleteRecursive(org.apache.zookeeper.ZooKeeper zk, string path = "", string key = "")
         {
             try
             {
@@ -97,7 +97,7 @@ namespace FeatureFlags.Test
             catch (KeeperException.NoNodeException) { }
         }
 
-        public static async Task<string> CreateIfNotExist(ZooKeeper zk, string path, string data = null)
+        public static async Task<string> CreateIfNotExist(org.apache.zookeeper.ZooKeeper zk, string path, string data = null)
         {
             var p = path.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
             var s = "";

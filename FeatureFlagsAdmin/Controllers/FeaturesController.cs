@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,32 +8,74 @@ using FeatureFlags;
 using FeatureFlags.Evaluator;
 using FeatureFlags.FeatureFlag;
 using FeatureFlags.Grammar;
+using FeatureFlags.Stores.ZooKeeper;
+using FeatureFlags.ZooKeeper.Stores.ZooKeeper;
 using FeatureFlagsAdmin.Models.FeaturesViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FeatureFlagsAdmin.Controllers
 {
-    public class FeaturesController : Controller
-    {
-        public IDynamicFeatureStore DynamicFeatureStore { get; set; }
-        public IFeatureStore FeatureStore { get; set; }
 
-        public FeaturesController(IDynamicFeatureStore featureStore)
+    public interface IFeatureStoreFactory
+    {
+        IDynamicFeatureStore GetFeatureStore(string store);
+
+        Task<List<string>> GetStores();
+    }
+
+    public class FeatureStoreFactory : IFeatureStoreFactory
+    {
+        readonly ConcurrentDictionary<string, IDynamicFeatureStore> cache=new ConcurrentDictionary<string, IDynamicFeatureStore>();
+
+        public string ZooKeeperAddress { get; }
+
+        public ZooKeeperStores ZooKeeperStores { get; }
+
+        public FeatureStoreFactory(string zooKeeperAddress)
         {
-            FeatureStore = featureStore as IFeatureStore;
-            DynamicFeatureStore = featureStore;
+            ZooKeeperAddress = zooKeeperAddress;
+            ZooKeeperStores = new ZooKeeperStores(ZooKeeperAddress);
         }
 
-        [Route("/")]
+        public IDynamicFeatureStore GetFeatureStore(string store)
+        {
+            return cache.GetOrAdd(store,
+                x => new ZooKeeperFeatureStore(ZooKeeperAddress + "/" + x, false, false));
+        }
+
+        public Task<List<string>> GetStores()
+        {
+            return ZooKeeperStores.GetStores();
+        }
+    }
+
+    [Route("/")]
+    public class FeaturesController : Controller
+    {
+        public IFeatureStoreFactory FeatureStoreFactory { get; set; }
+
+        public FeaturesController(IFeatureStoreFactory featureStoreFactory)
+        {
+            FeatureStoreFactory = featureStoreFactory;
+        }
+
+        [Route("")]
         public async Task<IActionResult> Index()
         {
+            return View(await FeatureStoreFactory.GetStores());
+        }
+
+        [Route("{store}")]
+        public async Task<IActionResult> StoreIndex(string store)
+        {
+            var featureStore = FeatureStoreFactory.GetFeatureStore(store);
             var model = new IndexViewModel
             {
-                Features = FeatureStore.GetAllFeatures()
+                Features = featureStore.GetAllFeatures()
                                        .Select(
                                             x=>
                                             {
-                                                var definition = DynamicFeatureStore.GetFeatureFlagDefinition(x.Name);
+                                                var definition = featureStore.GetFeatureFlagDefinition(x.Name);
                                                 var p = FeatureFlagEvaluatorUtils.Parse(x.Name,definition.Definition);
                                                 var dynamicEvaluator = p as DynamicFeatureFlagStateEvaluator;
                                                 if (dynamicEvaluator != null)
@@ -54,7 +97,8 @@ namespace FeatureFlagsAdmin.Controllers
                                                     };
                                             }
                                         ).OrderBy(x=>x.Key).ToList(),
-                ActiveNodes = await (FeatureStore as IWatchdog)?.GetActiveNodes()
+                ActiveNodes = await (featureStore as IWatchdog)?.GetActiveNodes(),
+                AllStores = await FeatureStoreFactory.GetStores()
             };
 
             return View(model);
@@ -62,48 +106,51 @@ namespace FeatureFlagsAdmin.Controllers
 
 
         [HttpPost]
-        [Route("/features/{key}/activate")]
-        public void Activate(string key)
+        [Route("{store}/features/{key}/activate")]
+        public void Activate(string store, string key)
         {
-            var def= DynamicFeatureStore.GetFeatureFlagDefinition(key);
+            var featureStore = FeatureStoreFactory.GetFeatureStore(store);
+            var def = featureStore.GetFeatureFlagDefinition(key);
             var p = FeatureFlagEvaluatorUtils.Parse(key,def.Definition);
             var dynamicEvaluator = p as DynamicFeatureFlagStateEvaluator;
             if (dynamicEvaluator != null)
             {
                 dynamicEvaluator.Rules.OverrideValue = null;
-                DynamicFeatureStore.SetFeatureFlagDefinition(new FeatureFlagDefinition { Name = key, Definition = FeatureFlagEvaluatorUtils.SerializeRules(dynamicEvaluator.Rules) });
+                featureStore.SetFeatureFlagDefinition(new FeatureFlagDefinition { Name = key, Definition = FeatureFlagEvaluatorUtils.SerializeRules(dynamicEvaluator.Rules) });
             }
             else
-                DynamicFeatureStore.SetFeatureFlagDefinition(new FeatureFlagDefinition { Name = key, Definition = "true" });
+                featureStore.SetFeatureFlagDefinition(new FeatureFlagDefinition { Name = key, Definition = "true" });
 
         }
 
         [HttpPost]
-        [Route("/features/{key}/deactivate")]
-        public void Dectivate(string key)
+        [Route("{store}/features/{key}/deactivate")]
+        public void Dectivate(string store, string key)
         {
-            var def = DynamicFeatureStore.GetFeatureFlagDefinition(key);
+            var featureStore = FeatureStoreFactory.GetFeatureStore(store);
+            var def = featureStore.GetFeatureFlagDefinition(key);
             var p = FeatureFlagEvaluatorUtils.Parse(key,def.Definition);
             var dynamicEvaluator = p as DynamicFeatureFlagStateEvaluator;
             if (dynamicEvaluator != null)
             {
                 dynamicEvaluator.Rules.OverrideValue = false;
-                DynamicFeatureStore.SetFeatureFlagDefinition(new FeatureFlagDefinition { Name = key, Definition = FeatureFlagEvaluatorUtils.SerializeRules(dynamicEvaluator.Rules) });
+                featureStore.SetFeatureFlagDefinition(new FeatureFlagDefinition { Name = key, Definition = FeatureFlagEvaluatorUtils.SerializeRules(dynamicEvaluator.Rules) });
             }
             else
-                DynamicFeatureStore.SetFeatureFlagDefinition(new FeatureFlagDefinition { Name = key, Definition = "false" });
+                featureStore.SetFeatureFlagDefinition(new FeatureFlagDefinition { Name = key, Definition = "false" });
         }
 
 
         [HttpPost]
-        [Route("/features/{key}")]
-        public void SetRule(string key, string rule)
+        [Route("{store}/features/{key}")]
+        public void SetRule(string store, string key, string rule)
         {
-            var def = DynamicFeatureStore.GetFeatureFlagDefinition(key);
+            var featureStore = FeatureStoreFactory.GetFeatureStore(store);
+            var def = featureStore.GetFeatureFlagDefinition(key);
             var p = FeatureFlagEvaluatorUtils.Parse(key,def.Definition);
             var dynamicEvaluator = p as DynamicFeatureFlagStateEvaluator ?? new DynamicFeatureFlagStateEvaluator(key, new FeatureRulesDefinition());
             dynamicEvaluator.Rules.ActiveExpression = rule;
-            DynamicFeatureStore.SetFeatureFlagDefinition(new FeatureFlagDefinition { Name = key, Definition = FeatureFlagEvaluatorUtils.SerializeRules(dynamicEvaluator.Rules) });
+            featureStore.SetFeatureFlagDefinition(new FeatureFlagDefinition { Name = key, Definition = FeatureFlagEvaluatorUtils.SerializeRules(dynamicEvaluator.Rules) });
         }
 
         [HttpPost]
