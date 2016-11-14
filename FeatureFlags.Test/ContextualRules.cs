@@ -66,7 +66,62 @@ namespace FeatureFlags.Test
             return features.IsActive("FeatureC");
         }
 
+        [Test]
+        public void RecursiveRule()
+        {
+            var n = new NameValueCollection();
+            n.Add("features.FeatureC", JsonConvert.SerializeObject(new FeatureRulesDefinition { ActiveExpression = "IsActive(\"FeatureA\")" }));
+            n.Add("features.FeatureA", JsonConvert.SerializeObject(new FeatureRulesDefinition { ActiveExpression = "true" }));
 
+            var features = new Features(new CachingFeatureStore(new AppSettingsFeatureStore("features.", n, true)),
+                new TestContextProvider(
+                    new FeatureContext
+                    {
+                        DateTime = new DateTime(2016, 11, 01, 14, 30, 00),
+                        Uid = null,
+                        Email = null
+                    }));
+
+            Assert.IsTrue(features.IsActive("FeatureC"));
+        }
+
+        [Test]
+        public void RecursiveRuleWithLoop1()
+        {
+            var n = new NameValueCollection();
+            n.Add("features.FeatureC", JsonConvert.SerializeObject(new FeatureRulesDefinition { ActiveExpression = "IsActive(\"FeatureC\")" }));
+            n.Add("features.FeatureA", JsonConvert.SerializeObject(new FeatureRulesDefinition { ActiveExpression = "true" }));
+
+            var features = new Features(new CachingFeatureStore(new AppSettingsFeatureStore("features.", n, true)),
+                new TestContextProvider(
+                    new FeatureContext
+                    {
+                        DateTime = new DateTime(2016, 11, 01, 14, 30, 00),
+                        Uid = null,
+                        Email = null
+                    }));
+
+            Assert.IsFalse(features.IsActive("FeatureC"));
+        }
+
+        [Test]
+        public void RecursiveRuleWithLoop2()
+        {
+            var n = new NameValueCollection();
+            n.Add("features.FeatureC", JsonConvert.SerializeObject(new FeatureRulesDefinition { ActiveExpression = "IsActive(\"FeatureA\")" }));
+            n.Add("features.FeatureA", JsonConvert.SerializeObject(new FeatureRulesDefinition { ActiveExpression = "IsActive(\"FeatureC\")" }));
+
+            var features = new Features(new CachingFeatureStore(new AppSettingsFeatureStore("features.", n, true)),
+                new TestContextProvider(
+                    new FeatureContext
+                    {
+                        DateTime = new DateTime(2016, 11, 01, 14, 30, 00),
+                        Uid = null,
+                        Email = null
+                    }));
+
+            Assert.IsFalse(features.IsActive("FeatureC"));
+        }
 
     }
 

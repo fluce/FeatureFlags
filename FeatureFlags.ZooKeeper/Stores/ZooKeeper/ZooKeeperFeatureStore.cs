@@ -79,7 +79,7 @@ namespace FeatureFlags.Stores.ZooKeeper
                 localView[featureFlagDefinition.Name] = new LocalViewItem
                 {
                     Definition = featureFlagDefinition.Definition,
-                    Evaluator = FeatureFlagEvaluatorUtils.Parse(featureFlagDefinition.Definition)
+                    Evaluator = FeatureFlagEvaluatorUtils.Parse(featureFlagDefinition.Name, featureFlagDefinition.Definition)
                 };
         }
 
@@ -207,7 +207,7 @@ namespace FeatureFlags.Stores.ZooKeeper
             var featureKey = GetKeyForPath(path);
             if (featureKey != null)
             {
-                localView[featureKey] = new LocalViewItem { Definition = data, Evaluator = FeatureFlagEvaluatorUtils.Parse(data) };
+                localView[featureKey] = new LocalViewItem { Definition = data, Evaluator = FeatureFlagEvaluatorUtils.Parse(featureKey, data) };
             }
         }
 

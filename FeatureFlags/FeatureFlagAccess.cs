@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -26,43 +27,53 @@ namespace FeatureFlags
 
     public static class FeatureFlagAccessor
     {
-        public static readonly ConcurrentDictionary<Type,Type> cache=new ConcurrentDictionary<Type, Type>();
+        public static readonly ConcurrentDictionary<Type,Type> Cache=new ConcurrentDictionary<Type, Type>();
         public static Type Build<T>() where T : class
         {
-            return cache.GetOrAdd(typeof (T), BuildType);
+            return Cache.GetOrAdd(typeof (T), BuildType);
         }
 
         public static T BuildAndInstanciate<T>(IFeatures features) where T : class
         {
-            var concreteType = cache.GetOrAdd(typeof(T), BuildType);
+            var concreteType = Cache.GetOrAdd(typeof(T), BuildType);
 
             var r=(T)Activator.CreateInstance(concreteType, features);
             return r;
         }
 
+
         private static Type BuildType(Type interfaceType) 
         {
             string name = interfaceType.FullName;
             AssemblyName asmName = new AssemblyName(name);
+#if DEBUG
             AssemblyBuilder ab =
                 AppDomain.CurrentDomain.DefineDynamicAssembly(
-                    asmName, AssemblyBuilderAccess.RunAndSave, "c:\\temp" );
+                    asmName, AssemblyBuilderAccess.RunAndSave, Path.GetTempPath());
+#else
+            AssemblyBuilder ab =
+                AppDomain.CurrentDomain.DefineDynamicAssembly(
+                    asmName, AssemblyBuilderAccess.Run);
+#endif
             ModuleBuilder mb = ab.DefineDynamicModule(name,name+".dll");
 
             TypeBuilder tb =
                 mb.DefineType("FeatureFlagAccessorAutogen." + name, TypeAttributes.Public, typeof (BaseFeatureFlagAccessor));
             tb.AddInterfaceImplementation(interfaceType);
 
+            var prefix = interfaceType.GetCustomAttribute<FeatureFlagPrefixAttribute>()?.FeatureKeyPrefix ?? "";
+            if (prefix != string.Empty && !prefix.EndsWith(".", StringComparison.Ordinal)) prefix += ".";
+
             foreach (var p in interfaceType.GetProperties())
             {
                 var attr = p.GetCustomAttribute<FeatureFlagAttribute>();
                 if (attr != null)
                 {
-                    AddProperty(tb, p.Name, attr.FeatureKey);
+                    AddProperty(tb, p.Name, prefix + attr.FeatureKey);
                 }
                 else
                 {
-                    AddProperty(tb, p.Name, p.Name);
+                    AddProperty(tb, p.Name, prefix + p.Name);
                 }
             }
 
@@ -74,7 +85,7 @@ namespace FeatureFlags
 
             ILGenerator il = cb.GetILGenerator();
             il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Call,typeof(object).GetConstructor(Type.EmptyTypes));
+            il.Emit(OpCodes.Call, typeof(object).GetConstructor(Type.EmptyTypes));
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Ldarg_1);
             il.Emit(OpCodes.Call, typeof(BaseFeatureFlagAccessor).GetProperty("Features",typeof(IFeatures)).SetMethod);
@@ -82,8 +93,9 @@ namespace FeatureFlags
 
             Type tc = tb.CreateType();
 
+#if DEBUG
             ab.Save(name+".dll");
-
+#endif
             return tc;
         }
 

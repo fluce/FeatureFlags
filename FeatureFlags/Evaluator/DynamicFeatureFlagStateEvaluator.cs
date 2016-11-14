@@ -7,8 +7,9 @@ namespace FeatureFlags.Evaluator
     {
         public FeatureRulesDefinition Rules { get; set; }
 
-        public DynamicFeatureFlagStateEvaluator(FeatureRulesDefinition rules)
+        public DynamicFeatureFlagStateEvaluator(string key, FeatureRulesDefinition rules)
         {
+            Key = key;
             Rules = rules;
         }
 
@@ -21,19 +22,31 @@ namespace FeatureFlags.Evaluator
 
             if (Rules.ActiveFunc != null)
             {
-                var glob = new Globals {Now = context.DateTime };
-                if (context.Email != null || context.Uid != null)
-                    glob.User = new Globals.UserInfo {Email = context.Email, Uid = context.Uid};
+                if (context.InternalFeatureContext.RecursiveStack.Contains(Key))
+                    throw new InvalidOperationException("Looping recursive call detected");
+
                 try
                 {
-                    return Rules.ActiveFunc(glob)
-                        ? FeatureFlagState.Active
-                        : FeatureFlagState.Inactive;
+                    context.InternalFeatureContext.RecursiveStack.Push(Key);
+                    var glob = new Globals(context) {Now = context.DateTime};
+                    if (context.Email != null || context.Uid != null)
+                        glob.User = new Globals.UserInfo {Email = context.Email, Uid = context.Uid};
+                    try
+                    {
+                        return Rules.ActiveFunc(glob)
+                            ? FeatureFlagState.Active
+                            : FeatureFlagState.Inactive;
+                    }
+                    catch (Exception)
+                    {
+                        return FeatureFlagState.Inactive;
+                    }
                 }
-                catch (Exception)
+                finally
                 {
-                    return FeatureFlagState.Inactive;
+                    context.InternalFeatureContext.RecursiveStack.Pop();
                 }
+                
             }
 
             return Rules.ContextualRules.All(x => x.Evaluate(context)==FeatureFlagState.Active) 

@@ -11,5 +11,15 @@ namespace FeatureFlags
         public DateTime DateTime { get; set; }
         public Guid? Uid { get; set; }
         public string Email { get; set; }
+
+        internal InternalFeatureContext InternalFeatureContext { get; set; }
+    }
+
+    public class InternalFeatureContext
+    {
+        internal Stack<string> RecursiveStack { get; } = new Stack<string>();
+
+        public IFeatures Features { get; set; }
+
     }
 }

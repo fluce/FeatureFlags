@@ -49,7 +49,7 @@ namespace FeatureFlags.Stores.AppSettings
         public FeatureFlagState GetFeatureState(string featureKey, FeatureContext featureContext)
         {
             var v = GetFeatureFlagDefinition(featureKey)?.Definition;
-            return FeatureFlagEvaluatorUtils.Parse(v).Evaluate(featureContext);
+            return FeatureFlagEvaluatorUtils.Parse(featureKey, v).Evaluate(featureContext);
         }
 
         public FeatureFlagDefinition GetFeatureFlagDefinition(string featureKey)

@@ -30,6 +30,9 @@ namespace FeatureFlags
 
         public bool IsActive(string featureKey, FeatureContext featureContext)
         {
+            if (featureContext.InternalFeatureContext==null)
+                featureContext.InternalFeatureContext = new InternalFeatureContext() { Features = this };
+
             return FeatureStore.GetFeature(featureKey).IsActive(featureContext);
         }
 
