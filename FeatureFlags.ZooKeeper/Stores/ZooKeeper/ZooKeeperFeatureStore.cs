@@ -19,18 +19,20 @@ namespace FeatureFlags.Stores.ZooKeeper
         readonly string prefix = "/features";
         readonly string connectionString;
         readonly bool useWatchdog;
+        readonly bool createStoreIfNeeded;
 
         Z.ZooKeeper zooKeeper;
         FeatureWatcher watcher;
 
-        public ZooKeeperFeatureStore(string zkConnectionString): this(zkConnectionString, true)
+        public ZooKeeperFeatureStore(string zkConnectionString): this(zkConnectionString, true, false)
         {
         }
 
-        public ZooKeeperFeatureStore(string zkConnectionString, bool useWatchdogParam)
+        public ZooKeeperFeatureStore(string zkConnectionString, bool useWatchdogParam, bool createStoreIfNeededParam)
         {
             connectionString = zkConnectionString;
             useWatchdog = useWatchdogParam;
+            createStoreIfNeeded = createStoreIfNeededParam;
             SetupConnection();
         }
 
@@ -107,10 +109,16 @@ namespace FeatureFlags.Stores.ZooKeeper
 
             var root = await zooKeeper.existsAsync("/");
             if (root == null)
+            {
+                if (!createStoreIfNeeded)
+                    throw new InvalidOperationException("Store does not exist");
+
                 await zooKeeper.createAsync("/", null, Z.ZooDefs.Ids.OPEN_ACL_UNSAFE, Z.CreateMode.PERSISTENT);
+            }
 
             await CreateIfNotExist(zooKeeper, prefix);
-            await CreateIfNotExist(zooKeeper, watchdogPrefix);
+            if (useWatchdog)
+                await CreateIfNotExist(zooKeeper, watchdogPrefix);
 
             watcher = new FeatureWatcher(zooKeeper, OnZookeeperEntryChanged);
             if (useWatchdog)
