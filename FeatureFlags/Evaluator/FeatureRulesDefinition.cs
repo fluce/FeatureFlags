@@ -46,7 +46,7 @@ namespace FeatureFlags.Evaluator
 
         public bool IsActive(string featureFlag)
         {
-            return Context.InternalFeatureContext.Features.IsActive(featureFlag, Context);
+            return Context?.InternalFeatureContext?.Features?.IsActive(featureFlag, Context) ?? false;
         }
 
     }
