@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using FeatureFlags.Stores;
 
@@ -39,6 +41,12 @@ namespace FeatureFlags
         public bool IsActive(string featureKey)
         {
             return IsActive(featureKey, FeatureContextProvider?.GetContext());
+        }
+
+        public IEnumerable<IFeatureFlag> GetAllFeatures()
+        {
+            var a=FeatureStore.GetAllFeatures().ToArray();
+            return a; // a.Select(x => x.Name);
         }
     }
 }

@@ -40,20 +40,33 @@ namespace TestWebAppOWIN.DependencyResolution {
                 });
             //For<IExample>().Use<Example>();
 
-            For<IFeatureContextProvider>().Use<AspNetCoreFeatureContextProvider>();
-            For<IFeatureStore>().Use(new ZooKeeperFeatureStore("localhost:2181/TestWebApp"));
-            For<IFeatures>().Use<Features>();
-
+            For<IFeatureContextProvider>().Use<OwinFeatureContextProvider>().Singleton();
+            For<IFeatureStore>().Use(new ZooKeeperFeatureStore("localhost:2181/TestWebApp")).Singleton();
+            For<IFeatures>().Use<Features>().Singleton();
+            For(typeof(IMyFeatures)).Use(FeatureFlagAccessor.Build<IMyFeatures>()).Singleton();
         }
 
         #endregion
     }
 
-    public class AspNetCoreFeatureContextProvider : IFeatureContextProvider
+    [FeatureFlagPrefix("Main")]
+    public interface IMyFeatures
+    {
+        bool UserFeature { get; }
+
+        bool FeatureA { get; }
+
+        bool FeatureB { get; }
+
+        bool FeatureC { get; }
+    }
+
+
+    public class OwinFeatureContextProvider : IFeatureContextProvider
     {
         public IContainer Container { get; set; }
 
-        public AspNetCoreFeatureContextProvider(IContainer container)
+        public OwinFeatureContextProvider(IContainer container)
         {
             Container = container;
         }

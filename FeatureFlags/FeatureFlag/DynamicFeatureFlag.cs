@@ -19,6 +19,9 @@ namespace FeatureFlags.FeatureFlag
             return DynamicFeatureStore.GetFeatureState(Name, featureContext);
         }
 
-
+        public override string ToString()
+        {
+            return $"[{Name}] {DynamicFeatureStore.GetFeatureFlagDefinition(Name).Definition}";
+        }
     }
 }

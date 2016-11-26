@@ -20,6 +20,7 @@ namespace FeatureFlags.Stores.ZooKeeper
         readonly string connectionString;
         readonly bool useWatchdog;
         readonly bool createStoreIfNeeded;
+        readonly int setupTimeout = 1000;
 
         Z.ZooKeeper zooKeeper;
         FeatureWatcher watcher;
@@ -39,16 +40,18 @@ namespace FeatureFlags.Stores.ZooKeeper
         public IFeatureFlag GetFeature(string featureKey)
         {
             var state = zooKeeper.getState();
-            if ((state == Z.ZooKeeper.States.CONNECTING || state == Z.ZooKeeper.States.CONNECTED || state == Z.ZooKeeper.States.CONNECTEDREADONLY) && !localView.ContainsKey(featureKey))
-                AsyncHelper.RunSync(()=>SetupKey(featureKey));
+            if ((state == Z.ZooKeeper.States.CONNECTING || state == Z.ZooKeeper.States.CONNECTED ||
+                 state == Z.ZooKeeper.States.CONNECTEDREADONLY) && !localView.ContainsKey(featureKey))
+                SetupKey(featureKey).Wait(setupTimeout);
             return new DynamicFeatureFlag(featureKey, this);
         }
 
         public IEnumerable<IFeatureFlag> GetAllFeatures()
         {
             var state = zooKeeper.getState();
-            if ((state == Z.ZooKeeper.States.CONNECTING || state == Z.ZooKeeper.States.CONNECTED || state == Z.ZooKeeper.States.CONNECTEDREADONLY))
-                AsyncHelper.RunSync(() => SetupAllKeys());
+            if ((state == Z.ZooKeeper.States.CONNECTING || state == Z.ZooKeeper.States.CONNECTED ||
+                 state == Z.ZooKeeper.States.CONNECTEDREADONLY))
+                SetupAllKeys().Wait(setupTimeout);
             return localView.Keys.Select(x => new DynamicFeatureFlag(x, this));
         }
 
@@ -97,7 +100,7 @@ namespace FeatureFlags.Stores.ZooKeeper
         {
             lock (connectionSetupLock)
             {
-                AsyncHelper.RunSync(SetupConnectionAsync);
+                SetupConnectionAsync().Wait(setupTimeout);
             }
         }
 
